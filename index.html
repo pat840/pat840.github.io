@@ -1,4 +1,118 @@
 <!DOCTYPE html>
 <html lang="de">
-<head><meta charset="UTF-8"><title>loading</title></head>
-<body>loading</body></html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyBeat Maker</title>
+  <style>body{font-family:Outfit,system-ui,sans-serif;background:#07070b;color:#e2e8f0;margin:0} .wrap{max-width:36rem;margin:auto;padding:2rem 1.25rem} .card{background:#141422;border-radius:1.5rem;padding:1.35rem;margin-bottom:1rem} textarea,select{width:100%;background:#0c0c14;color:#e2e8f0;border:1px solid #2a2a42;border-radius:1rem;padding:.85rem 1rem;font:inherit} textarea{min-height:9rem} .btn-main{width:100%;height:3.5rem;border:0;border-radius:1rem;font-weight:600;background:linear-gradient(90deg,#7c6cff,#5eead4);margin-top:1rem} #player{display:none} .play{width:3.5rem;height:3.5rem;border-radius:99px;border:0} .readout{white-space:pre-wrap;font-size:.8rem;color:#cbd5e1;background:#0c0c14;padding:.75rem;border-radius:.9rem;margin-top:.8rem} .hint{font-size:.75rem;color:#64748b;text-align:center}</style>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>EasyBeat Maker</h1>
+    <p>Musik in einem Satz. Kein Konto. Keine Credits.</p>
+    <section class="card">
+      <label for="prompt">Dein Song-Wunsch</label>
+      <textarea id="prompt">Fröhlicher Pop-Song mit akustischer Gitarre, warmem Bass und klarem Gesang.
+
+Text:
+Heute scheint die Sonne wieder
+und die Stadt atmet leicht
+wir laufen barfuß durch den Sommer
+und der Beat trägt uns weit</textarea>
+      <p><label>Genre</label>
+      <select id="genre"><option value="pop">Pop</option><option value="rock">Rock</option><option value="electronic">Electronic</option><option value="chillhop">Chillhop</option></select></p>
+      <button class="btn-main" id="createBtn" type="button">Song erstellen</button>
+      <p class="hint">Beschreibe Stimmung, Instrumente und optional den Gesangstext.</p>
+    </section>
+    <section class="card" id="player">
+      <h2 id="songTitle"></h2>
+      <p id="songMeta"></p>
+      <div class="readout" id="readout"></div>
+      <p><button class="play" id="playBtn" type="button">▶</button></p>
+      <audio id="audio" controls></audio>
+      <p><button id="dlBtn" type="button">Song herunterladen (WAV)</button></p>
+    </section>
+    <details><summary>Erweitert (Optional)</summary>
+      <p>Gesang <input id="vocals" type="range" min="0" max="100" value="78"></p>
+      <p>Instrumente <input id="instruments" type="range" min="0" max="100" value="74"></p>
+      <p>Schlagzeug <input id="drums" type="range" min="0" max="100" value="80"></p>
+      <p>Bass <input id="bass" type="range" min="0" max="100" value="78"></p>
+    </details>
+  </div>
+  <script>
+  const GENRE_LABEL={pop:"Pop",rock:"Rock",electronic:"Electronic",chillhop:"Chillhop"};
+  function hashString(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function noteFreq(m){return 440*Math.pow(2,(m-69)/12);}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function fmt(sec){if(!isFinite(sec)||sec<0)sec=0;const m=Math.floor(sec/60),s=Math.floor(sec%60);return m+":"+String(s).padStart(2,"0");}
+  function slugify(t){return (t||"easybeat-song").toLowerCase().replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").slice(0,40)||"easybeat-song";}
+  function parsePrompt(raw,genre){
+    const text=raw.trim(),lower=text.toLowerCase();
+    const bpmMatch=lower.match(/(\d{2,3})\s*bpm/);
+    let lyrics=""; const parts=text.split(/\n\s*(?:text|lyrics|gesang(?:stext)?|refrain|verse)\s*[:\-]–?\s*/i);
+    if(parts.length>1) lyrics=parts.slice(1).join("\n").trim();
+    const words=(lyrics||"").split(/\s+/).filter(Boolean);
+    const happy=/fröhlich|froh|happy|sommer|sonne|leicht|party|dance/.test(lower);
+    const sad=/traurig|sad|melanch|ruhig|nacht|allein|regen/.test(lower);
+    const energetic=/energie|treibend|schnell|power|wuchtig/.test(lower);
+    const guitar=/gitarre|guitar|akustik|acoustic/.test(lower);
+    const piano=/klavier|piano|keys/.test(lower);
+    const vocalWanted=/gesang|vocal|stimme|sing|lyrics|text:/.test(lower)||words.length>3;
+    const bassWant=/bass|808/.test(lower);
+    let bpm=bpmMatch?clamp(+bpmMatch[1],70,160):({pop:112,rock:124,electronic:122,chillhop:88}[genre]||112);
+    if(happy&&!bpmMatch)bpm+=4; if(sad&&!bpmMatch)bpm-=8; if(energetic&&!bpmMatch)bpm+=8;
+    const scale=(sad||genre==="electronic")?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];
+    const root=genre==="rock"?45:genre==="electronic"?38:genre==="chillhop"?50:48;
+    const prog=sad?[0,5,3,4]:genre==="rock"?[0,3,5,0]:genre==="electronic"?[0,5,3,7]:[0,4,5,3];
+    const title=text.split("\n").map(s=>s.trim()).find(s=>s&&!/^(text|lyrics|gesang)/i.test(s))||"EasyBeat Song";
+    return {title:title.replace(/[.,;:]+$/, "").slice(0,80),lyrics:words,lyricPreview:words.slice(0,24).join(" "),happy,sad,guitar,piano,vocalWanted,bassWant,energetic,bpm,scale,root,prog,genre};
+  }
+  function env(t,a,d,s,r,hold){if(t<0)return 0;if(t<a)return t/a;if(t<a+d)return 1-(1-s)*((t-a)/d);if(t<hold)return s;return s*Math.max(0,1-(t-hold)/r);}
+  function generateTrack(prompt,genre,mix){
+    const p=parsePrompt(prompt,genre); const rand=mulberry32(hashString(prompt+"|"+genre));
+    const sr=44100, beat=60/p.bpm, bars=20, duration=bars*4*beat, n=Math.floor(duration*sr);
+    const drums=new Float32Array(n), bass=new Float32Array(n), inst=new Float32Array(n), voc=new Float32Array(n);
+    const motifA=[0,2,4,2,5,4,2,0], motifB=[4,5,7,5,4,2,0,2], motifC=[7,5,4,5,2,4,0,0], rhy=[1,1,2,1,1,1,2,1];
+    function sectionOf(bar){if(bar<2)return"intro";if(bar<6)return"verse";if(bar<10)return"chorus";if(bar<14)return"verse";if(bar<18)return"chorus";return"outro";}
+    function add(buf,i,v){if(i>=0&&i<buf.length)buf[i]+=v;}
+    function kick(at,amp){const len=Math.floor(.28*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,f=150*Math.exp(-t*16)+36;add(drums,at+i,(Math.sin(2*Math.PI*f*t)*Math.exp(-t*11)+(rand()*2-1)*Math.exp(-t*90)*.12)*amp);}}
+    function snare(at,amp){const len=Math.floor(.2*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr;add(drums,at+i,(Math.sin(2*Math.PI*196*t)*Math.exp(-t*18)*.28+(rand()*2-1)*Math.exp(-t*16)*.72)*amp);}}
+    function hat(at,amp,open){const len=Math.floor((open?.14:.04)*sr);for(let i=0;i<len&&at+i<n;i++)add(drums,at+i,(rand()*2-1)*Math.exp(-i/sr*(open?14:60))*amp);}
+    function clap(at,amp){for(let k=0;k<4;k++){const off=Math.floor((.008+k*.011)*sr);for(let i=0;i<Math.floor(.04*sr)&&at+off+i<n;i++)add(drums,at+off+i,(rand()*2-1)*Math.exp(-i/sr*40)*amp*.35);}}
+    function bassNote(at,midi,durBeats,amp){const len=Math.floor(durBeats*beat*sr*.96),f=noteFreq(midi);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.008,.06,.75,.08,durBeats*beat*.82);add(bass,at+i,(Math.sin(2*Math.PI*f*t)+.18*Math.sin(2*Math.PI*f*2*t))*e*amp);}}
+    function pluck(at,midi,durBeats,amp){const f=noteFreq(midi),period=Math.max(8,Math.floor(sr/f)),ring=new Float32Array(period);for(let i=0;i<period;i++)ring[i]=rand()*2-1;const len=Math.floor(durBeats*beat*sr),damp=p.guitar?.496:.488;for(let i=0;i<len&&at+i<n;i++){const idx=i%period,nxt=(idx+1)%period;ring[idx]=(ring[idx]+ring[nxt])*damp;add(inst,at+i,ring[idx]*Math.exp(-i/sr*(p.guitar?1.6:2.4))*amp);}}
+    function piano(at,midi,durBeats,amp){const f=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.004,.18,.28,.25,durBeats*beat*.7);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+.35*Math.sin(2*Math.PI*f*2*t)*Math.exp(-t*6))*e*amp);}}
+    function pad(at,midi,durBeats,amp){const f=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.08,.3,.55,.35,durBeats*beat*.85);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+Math.sin(2*Math.PI*f*1.007*t))*.5*e*amp);}}
+    function voice(at,midi,durBeats,amp){const f0=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.03,.08,.7,.12,durBeats*beat*.78),f=f0*(1+.007*Math.sin(2*Math.PI*5.1*t));add(voc,at+i,(Math.sin(2*Math.PI*f*t)+.22*Math.sin(2*Math.PI*f*2*t))*e*amp);}}
+    const eighth=beat/2; let lyricIdx=0;
+    for(let bar=0;bar<bars;bar++){
+      const sec=sectionOf(bar),chord=p.prog[bar%p.prog.length],rootMidi=p.root+chord,barAt=Math.floor(bar*4*beat*sr);
+      const energy=sec==="chorus"?1:sec==="verse"?.82:sec==="outro"?.55:.62;
+      if(sec!=="outro"){kick(barAt,.95*energy);kick(barAt+Math.floor(2*beat*sr),.88*energy);if(p.genre==="rock"||p.energetic)kick(barAt+Math.floor(2.5*beat*sr),.55*energy);}else kick(barAt,.7);
+      if(sec!=="intro"){snare(barAt+Math.floor(beat*sr),.72*energy);snare(barAt+Math.floor(3*beat*sr),.74*energy);if(sec==="chorus")clap(barAt+Math.floor(beat*sr),.45);}
+      for(let e=0;e<8;e++){const swing=(e%2&&p.genre==="chillhop")?eighth*.16:0;hat(barAt+Math.floor((e*eighth+swing)*sr),(p.genre==="chillhop"?.16:.13)*energy*(e%2?.7:1),e===7&&sec==="chorus");}
+      const bassDur=p.genre==="electronic"?1:2; bassNote(barAt,rootMidi-12,bassDur,.55*(p.bassWant?1.15:1)); bassNote(barAt+Math.floor(bassDur*beat*sr),rootMidi-12+(sec==="chorus"?7:0),4-bassDur,.48);
+      pad(barAt,rootMidi+12,4,.09*energy); pad(barAt,rootMidi+19,4,.07*energy);
+      const leadFn=(p.piano&&!p.guitar)?piano:pluck; const motif=sec==="chorus"?motifB:(bar%2?motifC:motifA);
+      let step=0; for(let i=0;i<motif.length;i++){const deg=p.scale[motif[i]%p.scale.length],midi=rootMidi+deg+(sec==="chorus"?24:12),durB=rhy[i]*.5,at=barAt+Math.floor(step*eighth*sr); if(sec!=="outro") leadFn(at,midi,durB*1.15,(p.guitar||p.piano?.34:.26)*energy); step+=rhy[i];}
+      if(p.vocalWanted&&(sec==="verse"||sec==="chorus")){const line=sec==="chorus"?motifB:motifA; let st=0; for(let i=0;i<8;i++){const deg=p.scale[line[i]%p.scale.length],midi=rootMidi+deg+24,durB=rhy[i]*.5,at=barAt+Math.floor(st*eighth*sr); if(p.lyrics.length===0||lyricIdx<p.lyrics.length*4) voice(at,midi,durB*1.05,sec==="chorus"?.34:.26); lyricIdx++; st+=rhy[i];}}
+    }
+    const md=(mix.drums??80)/100,mb=(mix.bass??78)/100,mi=(mix.instruments??74)/100,mv=(mix.vocals??78)/100;
+    const out=new Float32Array(n); let peak=.0001;
+    for(let i=0;i<n;i++){let s=drums[i]*md+bass[i]*mb+inst[i]*mi+voc[i]*mv; if(i>80)s=s*.88+out[i-80]*.12; out[i]=s; peak=Math.max(peak,Math.abs(s));}
+    const gain=.86/peak; for(let i=0;i<n;i++) out[i]=Math.tanh(out[i]*gain*1.2)*clamp(i/(sr*.05),0,1)*clamp((n-i)/(sr*.35),0,1);
+    return {samples:out,sampleRate:sr,duration,parsed:p};
+  }
+  function encodeWav(samples,sampleRate){const buffer=new ArrayBuffer(44+samples.length*2),view=new DataView(buffer); const ws=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));}; ws(0,"RIFF");view.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);ws(36,"data");view.setUint32(40,samples.length*2,true); let o=44; for(let i=0;i<samples.length;i++,o+=2){const s=clamp(samples[i],-1,1); view.setInt16(o,s<0?s*0x8000:s*0x7fff,true);} return new Blob([buffer],{type:"audio/wav"});}
+  const els={prompt:document.getElementById("prompt"),genre:document.getElementById("genre"),create:document.getElementById("createBtn"),player:document.getElementById("player"),title:document.getElementById("songTitle"),meta:document.getElementById("songMeta"),readout:document.getElementById("readout"),play:document.getElementById("playBtn"),audio:document.getElementById("audio"),dl:document.getElementById("dlBtn"),vocals:document.getElementById("vocals"),instruments:document.getElementById("instruments"),drums:document.getElementById("drums"),bass:document.getElementById("bass")};
+  let objectUrl=null,currentTitle="",busy=false;
+  function mix(){return {vocals:+els.vocals.value,instruments:+els.instruments.value,drums:+els.drums.value,bass:+els.bass.value};}
+  function loadSong(raw){const blob=encodeWav(raw.samples,raw.sampleRate); if(objectUrl) URL.revokeObjectURL(objectUrl); objectUrl=URL.createObjectURL(blob); currentTitle=raw.parsed.title; els.audio.src=objectUrl; els.audio.load(); els.title.textContent=raw.parsed.title; els.meta.textContent=GENRE_LABEL[raw.parsed.genre]+" · "+Math.round(raw.parsed.bpm)+" BPM · "+fmt(raw.duration); els.readout.textContent="Gelesen aus deinem Prompt:\n• Stimmung: "+(raw.parsed.sad?"ruhig/melancholisch":raw.parsed.happy?"hell/fröhlich":"neutral")+"\n• Instrumente: "+[raw.parsed.guitar?"Gitarre":null,raw.parsed.piano?"Klavier":null,"Bass","Schlagzeug",raw.parsed.vocalWanted?"Gesangslinie":null].filter(Boolean).join(", ")+(raw.parsed.lyricPreview?"\n• Text: "+raw.parsed.lyricPreview:"\n• Kein Extra-Text – Melodie mit Gesangston")+"\nAufbau: Intro → Strophe → Refrain → Strophe → Refrain → Outro"; els.play.textContent="▶"; els.player.style.display="block";}
+  els.create.onclick=function(){const text=els.prompt.value.trim(); if(!text||busy)return; busy=true; els.create.disabled=true; els.create.textContent="Dein Song wird komponiert..."; setTimeout(function(){loadSong(generateTrack(text,els.genre.value,mix())); els.create.disabled=false; els.create.textContent="Song erstellen"; busy=false;},30);};
+  els.play.onclick=function(){if(!els.audio.src)return; if(els.audio.paused){els.audio.play(); els.play.textContent="❚❚";}else{els.audio.pause(); els.play.textContent="▶";}};
+  els.audio.onended=function(){els.play.textContent="▶";};
+  els.dl.onclick=function(){if(!objectUrl)return; const a=document.createElement("a"); a.href=objectUrl; a.download=slugify(currentTitle)+".wav"; document.body.appendChild(a); a.click(); a.remove();};
+  </script>
+</body></html>
