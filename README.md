@@ -1,2 +1,3 @@
-# pat840.github.io
-EasyBeat Maker Website
+# EasyBeat Maker
+
+Öffne die App: https://pat840.github.io/
