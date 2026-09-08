@@ -1,118 +1,211 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EasyBeat Maker</title>
-  <style>body{font-family:Outfit,system-ui,sans-serif;background:#07070b;color:#e2e8f0;margin:0} .wrap{max-width:36rem;margin:auto;padding:2rem 1.25rem} .card{background:#141422;border-radius:1.5rem;padding:1.35rem;margin-bottom:1rem} textarea,select{width:100%;background:#0c0c14;color:#e2e8f0;border:1px solid #2a2a42;border-radius:1rem;padding:.85rem 1rem;font:inherit} textarea{min-height:9rem} .btn-main{width:100%;height:3.5rem;border:0;border-radius:1rem;font-weight:600;background:linear-gradient(90deg,#7c6cff,#5eead4);margin-top:1rem} #player{display:none} .play{width:3.5rem;height:3.5rem;border-radius:99px;border:0} .readout{white-space:pre-wrap;font-size:.8rem;color:#cbd5e1;background:#0c0c14;padding:.75rem;border-radius:.9rem;margin-top:.8rem} .hint{font-size:.75rem;color:#64748b;text-align:center}</style>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EasyBeat Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#07070b;--card:#141422;--in:#0c0c14;--line:#2a2a42;--text:#e2e8f0;--muted:#94a3b8;--faint:#64748b;--neon:#7c6cff;--glow:#5eead4;--soft:#a99bff}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Outfit,system-ui,sans-serif}
+body{min-height:100vh;background-image:radial-gradient(ellipse at top,rgba(124,108,255,.12),transparent 55%),radial-gradient(ellipse at bottom,rgba(94,234,212,.06),transparent 50%)}
+.wrap{max-width:36rem;margin:0 auto;padding:2rem 1.25rem 2.5rem}
+header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem}
+.logo{width:2.75rem;height:2.75rem;border-radius:1rem;background:linear-gradient(135deg,var(--neon),var(--glow));display:grid;place-items:center;box-shadow:0 0 40px rgba(124,108,255,.28)}
+h1{margin:0;font-size:1.45rem;font-weight:600}.sub{margin:.15rem 0 0;color:var(--muted);font-size:.85rem}
+.card{background:rgba(20,20,34,.92);border:1px solid rgba(255,255,255,.05);border-radius:1.5rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+label{display:block;font-size:.85rem;font-weight:500;color:#cbd5e1;margin:0 0 .4rem}
+textarea,select{width:100%;background:var(--in);border:1px solid rgba(255,255,255,.1);color:var(--text);border-radius:1rem;padding:.8rem 1rem;font:inherit}
+textarea{resize:vertical;min-height:6.2rem}
+textarea:focus,select:focus,button:focus-visible{outline:none;border-color:rgba(124,108,255,.6);box-shadow:0 0 0 3px rgba(124,108,255,.18)}
+.field{margin-top:.95rem}.row2{display:flex;justify-content:space-between;align-items:baseline}
+.sel{position:relative}.sel span{position:absolute;right:1rem;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:var(--line);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--soft);cursor:pointer;box-shadow:0 0 0 4px rgba(124,108,255,.2)}
+.btn{width:100%;height:3.4rem;margin-top:1.05rem;border:0;border-radius:1rem;font:inherit;font-weight:600;color:#07070b;cursor:pointer;background:linear-gradient(90deg,var(--neon),var(--glow))}
+.btn:disabled{opacity:.65;cursor:wait}.hint{text-align:center;font-size:.75rem;color:var(--faint);margin:.65rem 0 0}
+#player{display:none}.kicker{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:0}
+.title{margin:.3rem 0 0;font-size:1.05rem;font-weight:500}.meta{margin:.35rem 0 0;color:var(--muted);font-size:.85rem}
+.readout{margin-top:.7rem;white-space:pre-wrap;background:rgba(12,12,20,.65);border:1px solid rgba(255,255,255,.06);border-radius:.9rem;padding:.7rem .8rem;color:#cbd5e1;font-size:.8rem;line-height:1.45}
+.playrow{display:flex;align-items:center;gap:1rem;margin-top:1rem}
+.play{flex:0 0 3.4rem;width:3.4rem;height:3.4rem;border:0;border-radius:99px;background:#fff;color:#07070b;cursor:pointer}
+.bar{flex:1;height:.75rem;border:0;border-radius:99px;background:var(--line);overflow:hidden;cursor:pointer;padding:0}
+.bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--neon),var(--glow))}
+.times{display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem;margin-top:.35rem}
+.dl{width:100%;height:3rem;margin-top:1rem;border-radius:1rem;border:1px solid rgba(255,255,255,.15);background:var(--in);color:var(--text);font:inherit;cursor:pointer}
+.adv{background:rgba(12,12,20,.5);border:1px solid rgba(255,255,255,.05);border-radius:1.4rem;overflow:hidden}
+.adv>summary{list-style:none;padding:.85rem 1.15rem;color:var(--muted);cursor:pointer;display:flex;justify-content:space-between}
+.adv>summary::-webkit-details-marker{display:none}.adv-body{padding:0 1.15rem 1.1rem;border-top:1px solid rgba(255,255,255,.05)}
+.sl{margin-top:.85rem}.sl-top{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem}
+footer{text-align:center;color:#475569;font-size:.75rem;margin-top:1.4rem}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>EasyBeat Maker</h1>
-    <p>Musik in einem Satz. Kein Konto. Keine Credits.</p>
-    <section class="card">
-      <label for="prompt">Dein Song-Wunsch</label>
-      <textarea id="prompt">Fröhlicher Pop-Song mit akustischer Gitarre, warmem Bass und klarem Gesang.
-
-Text:
-Heute scheint die Sonne wieder
+<div class="wrap">
+<header>
+<div class="logo"><svg viewBox="0 0 24 24" width="22" height="22" fill="#07070b"><path d="M9 4v11.3A3.5 3.5 0 1 0 11 18V8h6V4H9z"/></svg></div>
+<div><h1>EasyBeat Maker</h1><p class="sub">Instrumental und Text getrennt. Länge selbst wählen.</p></div>
+</header>
+<section class="card">
+<label for="instrumental">Instrumental / Beat</label>
+<textarea id="instrumental">Fröhlicher Pop-Song mit akustischer Gitarre, warmem Bass und leichtem Schlagzeug. 112 BPM.</textarea>
+<div class="field">
+<label for="lyrics">Liedtext</label>
+<textarea id="lyrics">Heute scheint die Sonne wieder
 und die Stadt atmet leicht
 wir laufen barfuß durch den Sommer
 und der Beat trägt uns weit</textarea>
-      <p><label>Genre</label>
-      <select id="genre"><option value="pop">Pop</option><option value="rock">Rock</option><option value="electronic">Electronic</option><option value="chillhop">Chillhop</option></select></p>
-      <button class="btn-main" id="createBtn" type="button">Song erstellen</button>
-      <p class="hint">Beschreibe Stimmung, Instrumente und optional den Gesangstext.</p>
-    </section>
-    <section class="card" id="player">
-      <h2 id="songTitle"></h2>
-      <p id="songMeta"></p>
-      <div class="readout" id="readout"></div>
-      <p><button class="play" id="playBtn" type="button">▶</button></p>
-      <audio id="audio" controls></audio>
-      <p><button id="dlBtn" type="button">Song herunterladen (WAV)</button></p>
-    </section>
-    <details><summary>Erweitert (Optional)</summary>
-      <p>Gesang <input id="vocals" type="range" min="0" max="100" value="78"></p>
-      <p>Instrumente <input id="instruments" type="range" min="0" max="100" value="74"></p>
-      <p>Schlagzeug <input id="drums" type="range" min="0" max="100" value="80"></p>
-      <p>Bass <input id="bass" type="range" min="0" max="100" value="78"></p>
-    </details>
-  </div>
-  <script>
-  const GENRE_LABEL={pop:"Pop",rock:"Rock",electronic:"Electronic",chillhop:"Chillhop"};
-  function hashString(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
-  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-  function noteFreq(m){return 440*Math.pow(2,(m-69)/12);}
-  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-  function fmt(sec){if(!isFinite(sec)||sec<0)sec=0;const m=Math.floor(sec/60),s=Math.floor(sec%60);return m+":"+String(s).padStart(2,"0");}
-  function slugify(t){return (t||"easybeat-song").toLowerCase().replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").slice(0,40)||"easybeat-song";}
-  function parsePrompt(raw,genre){
-    const text=raw.trim(),lower=text.toLowerCase();
-    const bpmMatch=lower.match(/(\d{2,3})\s*bpm/);
-    let lyrics=""; const parts=text.split(/\n\s*(?:text|lyrics|gesang(?:stext)?|refrain|verse)\s*[:\-]–?\s*/i);
-    if(parts.length>1) lyrics=parts.slice(1).join("\n").trim();
-    const words=(lyrics||"").split(/\s+/).filter(Boolean);
-    const happy=/fröhlich|froh|happy|sommer|sonne|leicht|party|dance/.test(lower);
-    const sad=/traurig|sad|melanch|ruhig|nacht|allein|regen/.test(lower);
-    const energetic=/energie|treibend|schnell|power|wuchtig/.test(lower);
-    const guitar=/gitarre|guitar|akustik|acoustic/.test(lower);
-    const piano=/klavier|piano|keys/.test(lower);
-    const vocalWanted=/gesang|vocal|stimme|sing|lyrics|text:/.test(lower)||words.length>3;
-    const bassWant=/bass|808/.test(lower);
-    let bpm=bpmMatch?clamp(+bpmMatch[1],70,160):({pop:112,rock:124,electronic:122,chillhop:88}[genre]||112);
-    if(happy&&!bpmMatch)bpm+=4; if(sad&&!bpmMatch)bpm-=8; if(energetic&&!bpmMatch)bpm+=8;
-    const scale=(sad||genre==="electronic")?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];
-    const root=genre==="rock"?45:genre==="electronic"?38:genre==="chillhop"?50:48;
-    const prog=sad?[0,5,3,4]:genre==="rock"?[0,3,5,0]:genre==="electronic"?[0,5,3,7]:[0,4,5,3];
-    const title=text.split("\n").map(s=>s.trim()).find(s=>s&&!/^(text|lyrics|gesang)/i.test(s))||"EasyBeat Song";
-    return {title:title.replace(/[.,;:]+$/, "").slice(0,80),lyrics:words,lyricPreview:words.slice(0,24).join(" "),happy,sad,guitar,piano,vocalWanted,bassWant,energetic,bpm,scale,root,prog,genre};
+</div>
+<div class="field">
+<label for="genre">Genre</label>
+<div class="sel">
+<select id="genre">
+<option value="pop">Pop</option>
+<option value="indie">Indie</option>
+<option value="rock">Rock</option>
+<option value="metal">Metal</option>
+<option value="punk">Punk</option>
+<option value="folk">Folk</option>
+<option value="country">Country</option>
+<option value="hiphop">Hip-Hop</option>
+<option value="trap">Trap</option>
+<option value="rnb">R&amp;B</option>
+<option value="soul">Soul</option>
+<option value="jazz">Jazz</option>
+<option value="house">House</option>
+<option value="techno">Techno</option>
+<option value="electronic">Electronic</option>
+<option value="chillhop">Chillhop</option>
+<option value="ambient">Ambient</option>
+<option value="disco">Disco</option>
+<option value="reggae">Reggae</option>
+<option value="latin">Latin</option>
+</select><span>▾</span>
+</div>
+</div>
+<div class="field">
+<div class="row2"><label for="length">Länge</label><span id="lenLab" style="color:#94a3b8;font-size:.85rem">1:00</span></div>
+<input id="length" type="range" min="30" max="300" step="5" value="60"/>
+<p class="hint" style="text-align:left;margin-top:.4rem">30 Sekunden bis 5 Minuten</p>
+</div>
+<button class="btn" id="createBtn" type="button">Song erstellen</button>
+<p class="hint">Oben das Instrumentale, darunter den Liedtext. Die Länge stellst du selbst ein.</p>
+</section>
+<section class="card" id="player">
+<p class="kicker">Neuer Track</p>
+<h2 class="title" id="songTitle"></h2>
+<p class="meta" id="songMeta"></p>
+<div class="readout" id="readout"></div>
+<div class="playrow">
+<button class="play" id="playBtn" type="button">▶</button>
+<div style="flex:1;min-width:0">
+<button class="bar" id="seek" type="button"><span id="prog"></span></button>
+<div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+</div>
+</div>
+<audio id="audio" preload="auto"></audio>
+<button class="dl" id="dlBtn" type="button">⬇ Song herunterladen (WAV)</button>
+</section>
+<details class="adv">
+<summary>Erweitert (Optional) <span>▾</span></summary>
+<div class="adv-body">
+<div class="sl"><div class="sl-top"><b>Gesangslinie</b><span id="vVoc">76%</span></div><input id="vocals" type="range" min="0" max="100" value="76"></div>
+<div class="sl"><div class="sl-top"><b>Instrumente</b><span id="vIns">74%</span></div><input id="instruments" type="range" min="0" max="100" value="74"></div>
+<div class="sl"><div class="sl-top"><b>Schlagzeug</b><span id="vDrm">80%</span></div><input id="drums" type="range" min="0" max="100" value="80"></div>
+<div class="sl"><div class="sl-top"><b>Bass</b><span id="vBas">78%</span></div><input id="bass" type="range" min="0" max="100" value="78"></div>
+</div>
+</details>
+<footer>EasyBeat Maker</footer>
+</div>
+<script>
+const GENRES={pop:{bpm:112,swing:0,scale:[0,2,4,5,7,9,11],root:48,label:"Pop"},indie:{bpm:108,swing:0,scale:[0,2,4,5,7,9,10],root:47,label:"Indie"},rock:{bpm:124,swing:0,scale:[0,2,3,5,7,8,10],root:45,label:"Rock"},metal:{bpm:140,swing:0,scale:[0,2,3,5,7,8,10],root:40,label:"Metal"},punk:{bpm:168,swing:0,scale:[0,2,3,5,7,8,10],root:45,label:"Punk"},folk:{bpm:96,swing:.06,scale:[0,2,4,5,7,9,11],root:50,label:"Folk"},country:{bpm:108,swing:.08,scale:[0,2,4,5,7,9,11],root:50,label:"Country"},hiphop:{bpm:92,swing:.12,scale:[0,2,3,5,7,8,10],root:41,label:"Hip-Hop"},trap:{bpm:140,swing:0,scale:[0,3,5,7,10],root:36,label:"Trap"},rnb:{bpm:86,swing:.14,scale:[0,2,3,5,7,8,10],root:46,label:"R&B"},soul:{bpm:94,swing:.1,scale:[0,2,4,5,7,9,10],root:48,label:"Soul"},jazz:{bpm:118,swing:.22,scale:[0,2,4,6,7,9,11],root:48,label:"Jazz"},house:{bpm:124,swing:0,scale:[0,2,3,5,7,8,10],root:38,label:"House"},techno:{bpm:132,swing:0,scale:[0,2,3,5,7,8,10],root:36,label:"Techno"},electronic:{bpm:122,swing:0,scale:[0,2,3,5,7,8,10],root:38,label:"Electronic"},chillhop:{bpm:86,swing:.16,scale:[0,2,3,5,7,9,10],root:50,label:"Chillhop"},ambient:{bpm:76,swing:0,scale:[0,2,4,7,9],root:48,label:"Ambient"},disco:{bpm:118,swing:0,scale:[0,2,4,5,7,9,11],root:45,label:"Disco"},reggae:{bpm:78,swing:.18,scale:[0,2,3,5,7,9,10],root:47,label:"Reggae"},latin:{bpm:104,swing:.08,scale:[0,2,4,5,7,9,10],root:48,label:"Latin"}};
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function fq(m){return 440*Math.pow(2,(m-69)/12)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function fmt(sec){sec=Math.max(0,sec||0);return Math.floor(sec/60)+":"+String(Math.floor(sec%60)).padStart(2,"0")}
+function slug(t){return (t||"easybeat-song").toLowerCase().replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").slice(0,42)||"easybeat-song"}
+function env(t,a,d,s,r,h){if(t<0)return 0;if(t<a)return t/a;if(t<a+d)return 1-(1-s)*((t-a)/d);if(t<h)return s;return s*Math.max(0,1-(t-h)/r)}
+function parseInst(text,genre){
+  const g=GENRES[genre]||GENRES.pop,low=text.toLowerCase();
+  const bpmM=low.match(/(\d{2,3})\s*bpm/);
+  let bpm=bpmM?clamp(+bpmM[1],70,180):g.bpm;
+  if(/fröhlich|happy|sommer|party|dance|sonne/.test(low)) bpm+=4;
+  if(/traurig|sad|ruhig|nacht|ambient/.test(low)) bpm-=6;
+  return {guitar:/gitarre|guitar|akustik|acoustic/.test(low),piano:/klavier|piano|keys/.test(low),sad:/traurig|sad|melanch|ruhig|nacht|dunkel/.test(low),happy:/fröhlich|happy|sommer|sonne|leicht/.test(low),energetic:/treibend|wuchtig|energy|schnell|power/.test(low),bpm,swing:g.swing,scale:g.scale,root:g.root,label:g.label,key:genre,prog:/traurig|sad|melanch/.test(low)?[0,5,3,4]:(genre==="rock"||genre==="metal"||genre==="punk")?[0,3,5,0]:genre==="jazz"?[0,7,3,5]:(genre==="trap"||genre==="hiphop")?[0,5,3,0]:[0,4,5,3]};
+}
+function generate(instText,lyricText,genre,seconds,mix){
+  const p=parseInst(instText,genre);
+  const words=(lyricText||"").trim().split(/\s+/).filter(Boolean);
+  const rand=rng(hash(instText+"|"+lyricText+"|"+genre+"|"+seconds));
+  const sr=22050,beat=60/p.bpm,bars=Math.max(8,Math.round(seconds/(4*beat)));
+  const duration=bars*4*beat,n=Math.floor(duration*sr);
+  const drums=new Float32Array(n),bass=new Float32Array(n),inst=new Float32Array(n),voc=new Float32Array(n);
+  function add(b,i,v){if(i>=0&&i<b.length)b[i]+=v}
+  function kick(at,amp){const L=Math.floor(.26*sr);for(let i=0;i<L&&at+i<n;i++){const t=i/sr;add(drums,at+i,(Math.sin(2*Math.PI*(130*Math.exp(-t*15)+34)*t)*Math.exp(-t*10)+(rand()*2-1)*Math.exp(-t*70)*.1)*amp)}}
+  function snare(at,amp){const L=Math.floor(.18*sr);for(let i=0;i<L&&at+i<n;i++){const t=i/sr;add(drums,at+i,(Math.sin(2*Math.PI*190*t)*Math.exp(-t*16)*.25+(rand()*2-1)*Math.exp(-t*15)*.75)*amp)}}
+  function hat(at,amp,open){const L=Math.floor((open?.12:.035)*sr);for(let i=0;i<L&&at+i<n;i++)add(drums,at+i,(rand()*2-1)*Math.exp(-i/sr*(open?12:55))*amp)}
+  function bassN(at,midi,beats,amp){const L=Math.floor(beats*beat*sr*.95),f=fq(midi);for(let i=0;i<L&&at+i<n;i++){const t=i/sr,e=env(t,.01,.05,.72,.08,beats*beat*.8);add(bass,at+i,(Math.sin(2*Math.PI*f*t)+.16*Math.sin(4*Math.PI*f*t))*e*amp)}}
+  function pluck(at,midi,beats,amp){const f=fq(midi),per=Math.max(6,Math.floor(sr/f)),ring=new Float32Array(per);for(let i=0;i<per;i++)ring[i]=rand()*2-1;const L=Math.floor(beats*beat*sr),damp=p.guitar?.495:.486;for(let i=0;i<L&&at+i<n;i++){const i0=i%per,i1=(i0+1)%per;ring[i0]=(ring[i0]+ring[i1])*damp;add(inst,at+i,ring[i0]*Math.exp(-i/sr*(p.guitar?1.5:2.3))*amp)}}
+  function piano(at,midi,beats,amp){const f=fq(midi),L=Math.floor(beats*beat*sr);for(let i=0;i<L&&at+i<n;i++){const t=i/sr,e=env(t,.004,.16,.26,.22,beats*beat*.7);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+.3*Math.sin(4*Math.PI*f*t)*Math.exp(-t*7))*e*amp)}}
+  function pad(at,midi,beats,amp){const f=fq(midi),L=Math.floor(beats*beat*sr);for(let i=0;i<L&&at+i<n;i++){const t=i/sr,e=env(t,.1,.25,.5,.3,beats*beat*.85);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+Math.sin(2*Math.PI*f*1.006*t))*.5*e*amp)}}
+  function voice(at,midi,beats,amp){const f0=fq(midi),L=Math.floor(beats*beat*sr);for(let i=0;i<L&&at+i<n;i++){const t=i/sr,e=env(t,.025,.07,.68,.1,beats*beat*.76),f=f0*(1+.006*Math.sin(2*Math.PI*5*t));add(voc,at+i,(Math.sin(2*Math.PI*f*t)+.2*Math.sin(4*Math.PI*f*t))*e*amp)}}
+  function section(bar){const x=bar%16;if(x<2)return"intro";if(x<6)return"verse";if(x<10)return"chorus";if(x<14)return"verse";return"chorus"}
+  const motifA=[0,2,4,2,5,4,2,0],motifB=[4,5,7,5,4,2,0,2],motifC=[7,5,4,5,2,4,0,0],rhy=[1,1,2,1,1,1,2,1];
+  const eighth=beat/2; const lead=p.piano&&!p.guitar?piano:pluck;
+  for(let bar=0;bar<bars;bar++){
+    const sec=section(bar),ch=p.prog[bar%p.prog.length],root=p.root+ch,at0=Math.floor(bar*4*beat*sr);
+    const en=sec==="chorus"?1:sec==="verse"?.84:sec==="intro"?.62:.7;
+    if(p.key!=="ambient"){kick(at0,.92*en);kick(at0+Math.floor(2*beat*sr),.86*en);if(p.key==="rock"||p.key==="metal"||p.key==="punk"||p.energetic)kick(at0+Math.floor(2.5*beat*sr),.5*en);if(p.key==="trap"){kick(at0+Math.floor(1.75*beat*sr),.7*en);kick(at0+Math.floor(3.25*beat*sr),.55*en)}}
+    if(sec!=="intro"&&p.key!=="ambient"){snare(at0+Math.floor(beat*sr),.7*en);snare(at0+Math.floor(3*beat*sr),.72*en)}
+    if(p.key!=="ambient"){for(let e=0;e<8;e++){const sw=(e%2)?p.swing*eighth:0;hat(at0+Math.floor((e*eighth+sw)*sr),(.12+(p.key==="chillhop"||p.key==="house"?.04:0))*en*(e%2?.65:1),e===7&&sec==="chorus")}}
+    const bd=(p.key==="techno"||p.key==="house"||p.key==="electronic")?1:2;
+    bassN(at0,root-12,bd,.52);bassN(at0+Math.floor(bd*beat*sr),root-12+(sec==="chorus"?7:0),4-bd,.46);
+    pad(at0,root+12,4,.08*en);pad(at0,root+19,4,.06*en);
+    const mot=sec==="chorus"?motifB:(bar%2?motifC:motifA); let st=0;
+    for(let i=0;i<8;i++){const deg=p.scale[mot[i]%p.scale.length],midi=root+deg+(sec==="chorus"?24:12),dur=rhy[i]*.5;lead(at0+Math.floor(st*eighth*sr),midi,dur*1.1,(p.guitar||p.piano?.32:.24)*en);st+=rhy[i]}
+    if(words.length&&(sec==="verse"||sec==="chorus")){let s2=0;for(let i=0;i<8;i++){const deg=p.scale[mot[i]%p.scale.length],midi=root+deg+24,dur=rhy[i]*.5;voice(at0+Math.floor(s2*eighth*sr),midi,dur*1.05,sec==="chorus"?.32:.24);s2+=rhy[i]}}
   }
-  function env(t,a,d,s,r,hold){if(t<0)return 0;if(t<a)return t/a;if(t<a+d)return 1-(1-s)*((t-a)/d);if(t<hold)return s;return s*Math.max(0,1-(t-hold)/r);}
-  function generateTrack(prompt,genre,mix){
-    const p=parsePrompt(prompt,genre); const rand=mulberry32(hashString(prompt+"|"+genre));
-    const sr=44100, beat=60/p.bpm, bars=20, duration=bars*4*beat, n=Math.floor(duration*sr);
-    const drums=new Float32Array(n), bass=new Float32Array(n), inst=new Float32Array(n), voc=new Float32Array(n);
-    const motifA=[0,2,4,2,5,4,2,0], motifB=[4,5,7,5,4,2,0,2], motifC=[7,5,4,5,2,4,0,0], rhy=[1,1,2,1,1,1,2,1];
-    function sectionOf(bar){if(bar<2)return"intro";if(bar<6)return"verse";if(bar<10)return"chorus";if(bar<14)return"verse";if(bar<18)return"chorus";return"outro";}
-    function add(buf,i,v){if(i>=0&&i<buf.length)buf[i]+=v;}
-    function kick(at,amp){const len=Math.floor(.28*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,f=150*Math.exp(-t*16)+36;add(drums,at+i,(Math.sin(2*Math.PI*f*t)*Math.exp(-t*11)+(rand()*2-1)*Math.exp(-t*90)*.12)*amp);}}
-    function snare(at,amp){const len=Math.floor(.2*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr;add(drums,at+i,(Math.sin(2*Math.PI*196*t)*Math.exp(-t*18)*.28+(rand()*2-1)*Math.exp(-t*16)*.72)*amp);}}
-    function hat(at,amp,open){const len=Math.floor((open?.14:.04)*sr);for(let i=0;i<len&&at+i<n;i++)add(drums,at+i,(rand()*2-1)*Math.exp(-i/sr*(open?14:60))*amp);}
-    function clap(at,amp){for(let k=0;k<4;k++){const off=Math.floor((.008+k*.011)*sr);for(let i=0;i<Math.floor(.04*sr)&&at+off+i<n;i++)add(drums,at+off+i,(rand()*2-1)*Math.exp(-i/sr*40)*amp*.35);}}
-    function bassNote(at,midi,durBeats,amp){const len=Math.floor(durBeats*beat*sr*.96),f=noteFreq(midi);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.008,.06,.75,.08,durBeats*beat*.82);add(bass,at+i,(Math.sin(2*Math.PI*f*t)+.18*Math.sin(2*Math.PI*f*2*t))*e*amp);}}
-    function pluck(at,midi,durBeats,amp){const f=noteFreq(midi),period=Math.max(8,Math.floor(sr/f)),ring=new Float32Array(period);for(let i=0;i<period;i++)ring[i]=rand()*2-1;const len=Math.floor(durBeats*beat*sr),damp=p.guitar?.496:.488;for(let i=0;i<len&&at+i<n;i++){const idx=i%period,nxt=(idx+1)%period;ring[idx]=(ring[idx]+ring[nxt])*damp;add(inst,at+i,ring[idx]*Math.exp(-i/sr*(p.guitar?1.6:2.4))*amp);}}
-    function piano(at,midi,durBeats,amp){const f=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.004,.18,.28,.25,durBeats*beat*.7);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+.35*Math.sin(2*Math.PI*f*2*t)*Math.exp(-t*6))*e*amp);}}
-    function pad(at,midi,durBeats,amp){const f=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.08,.3,.55,.35,durBeats*beat*.85);add(inst,at+i,(Math.sin(2*Math.PI*f*t)+Math.sin(2*Math.PI*f*1.007*t))*.5*e*amp);}}
-    function voice(at,midi,durBeats,amp){const f0=noteFreq(midi),len=Math.floor(durBeats*beat*sr);for(let i=0;i<len&&at+i<n;i++){const t=i/sr,e=env(t,.03,.08,.7,.12,durBeats*beat*.78),f=f0*(1+.007*Math.sin(2*Math.PI*5.1*t));add(voc,at+i,(Math.sin(2*Math.PI*f*t)+.22*Math.sin(2*Math.PI*f*2*t))*e*amp);}}
-    const eighth=beat/2; let lyricIdx=0;
-    for(let bar=0;bar<bars;bar++){
-      const sec=sectionOf(bar),chord=p.prog[bar%p.prog.length],rootMidi=p.root+chord,barAt=Math.floor(bar*4*beat*sr);
-      const energy=sec==="chorus"?1:sec==="verse"?.82:sec==="outro"?.55:.62;
-      if(sec!=="outro"){kick(barAt,.95*energy);kick(barAt+Math.floor(2*beat*sr),.88*energy);if(p.genre==="rock"||p.energetic)kick(barAt+Math.floor(2.5*beat*sr),.55*energy);}else kick(barAt,.7);
-      if(sec!=="intro"){snare(barAt+Math.floor(beat*sr),.72*energy);snare(barAt+Math.floor(3*beat*sr),.74*energy);if(sec==="chorus")clap(barAt+Math.floor(beat*sr),.45);}
-      for(let e=0;e<8;e++){const swing=(e%2&&p.genre==="chillhop")?eighth*.16:0;hat(barAt+Math.floor((e*eighth+swing)*sr),(p.genre==="chillhop"?.16:.13)*energy*(e%2?.7:1),e===7&&sec==="chorus");}
-      const bassDur=p.genre==="electronic"?1:2; bassNote(barAt,rootMidi-12,bassDur,.55*(p.bassWant?1.15:1)); bassNote(barAt+Math.floor(bassDur*beat*sr),rootMidi-12+(sec==="chorus"?7:0),4-bassDur,.48);
-      pad(barAt,rootMidi+12,4,.09*energy); pad(barAt,rootMidi+19,4,.07*energy);
-      const leadFn=(p.piano&&!p.guitar)?piano:pluck; const motif=sec==="chorus"?motifB:(bar%2?motifC:motifA);
-      let step=0; for(let i=0;i<motif.length;i++){const deg=p.scale[motif[i]%p.scale.length],midi=rootMidi+deg+(sec==="chorus"?24:12),durB=rhy[i]*.5,at=barAt+Math.floor(step*eighth*sr); if(sec!=="outro") leadFn(at,midi,durB*1.15,(p.guitar||p.piano?.34:.26)*energy); step+=rhy[i];}
-      if(p.vocalWanted&&(sec==="verse"||sec==="chorus")){const line=sec==="chorus"?motifB:motifA; let st=0; for(let i=0;i<8;i++){const deg=p.scale[line[i]%p.scale.length],midi=rootMidi+deg+24,durB=rhy[i]*.5,at=barAt+Math.floor(st*eighth*sr); if(p.lyrics.length===0||lyricIdx<p.lyrics.length*4) voice(at,midi,durB*1.05,sec==="chorus"?.34:.26); lyricIdx++; st+=rhy[i];}}
-    }
-    const md=(mix.drums??80)/100,mb=(mix.bass??78)/100,mi=(mix.instruments??74)/100,mv=(mix.vocals??78)/100;
-    const out=new Float32Array(n); let peak=.0001;
-    for(let i=0;i<n;i++){let s=drums[i]*md+bass[i]*mb+inst[i]*mi+voc[i]*mv; if(i>80)s=s*.88+out[i-80]*.12; out[i]=s; peak=Math.max(peak,Math.abs(s));}
-    const gain=.86/peak; for(let i=0;i<n;i++) out[i]=Math.tanh(out[i]*gain*1.2)*clamp(i/(sr*.05),0,1)*clamp((n-i)/(sr*.35),0,1);
-    return {samples:out,sampleRate:sr,duration,parsed:p};
-  }
-  function encodeWav(samples,sampleRate){const buffer=new ArrayBuffer(44+samples.length*2),view=new DataView(buffer); const ws=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));}; ws(0,"RIFF");view.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);ws(36,"data");view.setUint32(40,samples.length*2,true); let o=44; for(let i=0;i<samples.length;i++,o+=2){const s=clamp(samples[i],-1,1); view.setInt16(o,s<0?s*0x8000:s*0x7fff,true);} return new Blob([buffer],{type:"audio/wav"});}
-  const els={prompt:document.getElementById("prompt"),genre:document.getElementById("genre"),create:document.getElementById("createBtn"),player:document.getElementById("player"),title:document.getElementById("songTitle"),meta:document.getElementById("songMeta"),readout:document.getElementById("readout"),play:document.getElementById("playBtn"),audio:document.getElementById("audio"),dl:document.getElementById("dlBtn"),vocals:document.getElementById("vocals"),instruments:document.getElementById("instruments"),drums:document.getElementById("drums"),bass:document.getElementById("bass")};
-  let objectUrl=null,currentTitle="",busy=false;
-  function mix(){return {vocals:+els.vocals.value,instruments:+els.instruments.value,drums:+els.drums.value,bass:+els.bass.value};}
-  function loadSong(raw){const blob=encodeWav(raw.samples,raw.sampleRate); if(objectUrl) URL.revokeObjectURL(objectUrl); objectUrl=URL.createObjectURL(blob); currentTitle=raw.parsed.title; els.audio.src=objectUrl; els.audio.load(); els.title.textContent=raw.parsed.title; els.meta.textContent=GENRE_LABEL[raw.parsed.genre]+" · "+Math.round(raw.parsed.bpm)+" BPM · "+fmt(raw.duration); els.readout.textContent="Gelesen aus deinem Prompt:\n• Stimmung: "+(raw.parsed.sad?"ruhig/melancholisch":raw.parsed.happy?"hell/fröhlich":"neutral")+"\n• Instrumente: "+[raw.parsed.guitar?"Gitarre":null,raw.parsed.piano?"Klavier":null,"Bass","Schlagzeug",raw.parsed.vocalWanted?"Gesangslinie":null].filter(Boolean).join(", ")+(raw.parsed.lyricPreview?"\n• Text: "+raw.parsed.lyricPreview:"\n• Kein Extra-Text – Melodie mit Gesangston")+"\nAufbau: Intro → Strophe → Refrain → Strophe → Refrain → Outro"; els.play.textContent="▶"; els.player.style.display="block";}
-  els.create.onclick=function(){const text=els.prompt.value.trim(); if(!text||busy)return; busy=true; els.create.disabled=true; els.create.textContent="Dein Song wird komponiert..."; setTimeout(function(){loadSong(generateTrack(text,els.genre.value,mix())); els.create.disabled=false; els.create.textContent="Song erstellen"; busy=false;},30);};
-  els.play.onclick=function(){if(!els.audio.src)return; if(els.audio.paused){els.audio.play(); els.play.textContent="❚❚";}else{els.audio.pause(); els.play.textContent="▶";}};
-  els.audio.onended=function(){els.play.textContent="▶";};
-  els.dl.onclick=function(){if(!objectUrl)return; const a=document.createElement("a"); a.href=objectUrl; a.download=slugify(currentTitle)+".wav"; document.body.appendChild(a); a.click(); a.remove();};
-  </script>
-</body></html>
+  const md=(mix.drums??80)/100,mb=(mix.bass??78)/100,mi=(mix.instruments??74)/100,mv=(mix.vocals??76)/100;
+  const out=new Float32Array(n); let peak=.0001;
+  for(let i=0;i<n;i++){let s=drums[i]*md+bass[i]*mb+inst[i]*mi+voc[i]*mv;if(i>60)s=s*.9+out[i-60]*.1;out[i]=s;peak=Math.max(peak,Math.abs(s))}
+  const g=.86/peak; for(let i=0;i<n;i++) out[i]=Math.tanh(out[i]*g*1.18)*clamp(i/(sr*.04),0,1)*clamp((n-i)/(sr*.4),0,1);
+  return {samples:out,sampleRate:sr,duration,parsed:p,words};
+}
+function wav(samples,sr){
+  const buf=new ArrayBuffer(44+samples.length*2),v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,"RIFF");v.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,"data");v.setUint32(40,samples.length*2,true);
+  let o=44;for(let i=0;i<samples.length;i++,o+=2){const s=clamp(samples[i],-1,1);v.setInt16(o,s<0?s*0x8000:s*0x7fff,true)}
+  return new Blob([buf],{type:"audio/wav"});
+}
+const $=id=>document.getElementById(id);
+$("length").oninput=()=>{$("lenLab").textContent=fmt(+$("length").value)};
+const mix=()=>({vocals:+$("vocals").value,instruments:+$("instruments").value,drums:+$("drums").value,bass:+$("bass").value});
+[["vocals","vVoc"],["instruments","vIns"],["drums","vDrm"],["bass","vBas"]].forEach(([a,b])=>{$(a).oninput=()=>$(b).textContent=$(a).value+"%"});
+let url=null,title="easybeat-song",busy=false;
+function load(raw){
+  const blob=wav(raw.samples,raw.sampleRate); if(url) URL.revokeObjectURL(url); url=URL.createObjectURL(blob);
+  title=raw.parsed.label+" Track";
+  $("audio").src=url; $("audio").load();
+  $("songTitle").textContent=($("instrumental").value.trim().split("\n")[0]||title).slice(0,80);
+  $("songMeta").textContent=raw.parsed.label+" · "+Math.round(raw.parsed.bpm)+" BPM · "+fmt(raw.duration);
+  $("readout").textContent="Getrennt übernommen:\n• Instrumental: "+($("instrumental").value.trim().slice(0,90)||"—")+"\n• Liedtext: "+(raw.words.slice(0,18).join(" ")||"(kein Text)")+"\n• Länge: "+fmt(raw.duration)+"\nAufbau: Intro / Strophe / Refrain, wiederholt sich bei längeren Songs.";
+  $("dur").textContent=fmt(raw.duration); $("cur").textContent="0:00"; $("prog").style.width="0%"; $("playBtn").textContent="▶"; $("player").style.display="block";
+}
+$("createBtn").onclick=function(){
+  if(busy) return; busy=true; this.disabled=true; this.textContent="Dein Song wird komponiert...";
+  const sec=+$("length").value;
+  setTimeout(()=>{try{load(generate($("instrumental").value,$("lyrics").value,$("genre").value,sec,mix()))}catch(e){alert("Bitte eine kürzere Länge wählen.")} this.disabled=false; this.textContent="Song erstellen"; busy=false;},30);
+};
+$("playBtn").onclick=function(){const a=$("audio"); if(!a.src)return; if(a.paused){a.play();this.textContent="❚❚"}else{a.pause();this.textContent="▶"}};
+$("audio").ontimeupdate=function(){const d=this.duration||1;$("prog").style.width=(this.currentTime/d*100)+"%";$("cur").textContent=fmt(this.currentTime)};
+$("audio").onended=()=>{$("playBtn").textContent="▶"};
+$("seek").onclick=function(e){const a=$("audio"); if(!a.src)return; const r=this.getBoundingClientRect(); a.currentTime=clamp((e.clientX-r.left)/r.width,0,1)*(a.duration||0)};
+$("dlBtn").onclick=function(){if(!url)return; const a=document.createElement("a"); a.href=url; a.download=slug(title)+".wav"; document.body.appendChild(a); a.click(); a.remove()};
+</script>
+</body>
+</html>
